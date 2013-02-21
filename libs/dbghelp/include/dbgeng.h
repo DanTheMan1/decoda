@@ -455,6 +455,48 @@ typedef struct _DEBUG_CACHED_SYMBOL_INFO
 // OutBuffer - Unwind information.
 #define DEBUG_REQUEST_GET_OFFSET_UNWIND_INFORMATION 20
 
+// InBuffer - Unused
+// OutBuffer - returned DUMP_HEADER32/DUMP_HEADER64 structure.
+#define DEBUG_REQUEST_GET_DUMP_HEADER 21
+
+// InBuffer - DUMP_HEADER32/DUMP_HEADER64 structure.
+// OutBuffer - Unused
+#define DEBUG_REQUEST_SET_DUMP_HEADER 22
+
+// InBuffer - Midori specific
+// OutBuffer - Midori specific
+#define DEBUG_REQUEST_MIDORI 23
+
+// InBuffer - Unused
+// OutBuffer - PROCESS_NAME_ENTRY blocks
+#define DEBUG_REQUEST_PROCESS_DESCRIPTORS 24
+
+// InBuffer - Unused
+// OutBuffer - MINIDUMP_MISC_INFO_N blocks
+#define DEBUG_REQUEST_MISC_INFORMATION 25
+
+// InBuffer - Unused
+// OutBuffer - ULONG64 as TokenHandle value
+#define DEBUG_REQUEST_OPEN_PROCESS_TOKEN 26
+
+// InBuffer - Unused
+// OutBuffer - ULONG64 as TokenHandle value
+#define DEBUG_REQUEST_OPEN_THREAD_TOKEN 27
+
+// InBuffer -  ULONG64 as TokenHandle being duplicated
+// OutBuffer - ULONG64 as new duplicated TokenHandle
+#define DEBUG_REQUEST_DUPLICATE_TOKEN 28
+
+// InBuffer - a ULONG64 as TokenHandle and a ULONG as NtQueryInformationToken() request code
+// OutBuffer - NtQueryInformationToken() return
+#define DEBUG_REQUEST_QUERY_INFO_TOKEN 29
+
+// InBuffer - ULONG64 as TokenHandle
+// OutBuffer - Unused
+#define DEBUG_REQUEST_CLOSE_TOKEN 30
+
+
+
 //
 // GetSourceFileInformation requests.
 //
@@ -1437,6 +1479,8 @@ typedef struct _DEBUG_CREATE_PROCESS_OPTIONS
 #define DEBUG_IOUTPUT_BREAKPOINT       0x20000000
 // Event output.
 #define DEBUG_IOUTPUT_EVENT            0x10000000
+// Virtual/Physical address translation
+#define DEBUG_IOUTPUT_ADDR_TRANSLATE   0x08000000
 
 // OutputIdentity flags.
 #define DEBUG_OUTPUT_IDENTITY_DEFAULT 0x00000000
@@ -1859,6 +1903,7 @@ DECLARE_INTERFACE_(IDebugClient, IUnknown)
 #define DEBUG_FORMAT_USER_SMALL_CODE_SEGMENTS             0x00001000
 #define DEBUG_FORMAT_USER_SMALL_NO_AUXILIARY_STATE        0x00002000
 #define DEBUG_FORMAT_USER_SMALL_FULL_AUXILIARY_STATE      0x00004000
+#define DEBUG_FORMAT_USER_SMALL_IGNORE_INACCESSIBLE_MEM   0x08000000
 
 //
 // Dump information file types.
@@ -4373,6 +4418,8 @@ typedef struct _DEBUG_STACK_FRAME
 #define DEBUG_STACK_PARAMETERS_NEWLINE      0x00000400
 // Produce stack output enhanced with DML content.
 #define DEBUG_STACK_DML                     0x00000800
+// Show offset from stack frame
+#define DEBUG_STACK_FRAME_OFFSETS           0x00001000
 
 // Classes of debuggee.  Each class
 // has different qualifiers for specific
@@ -4397,6 +4444,7 @@ typedef struct _DEBUG_STACK_FRAME
 #define DEBUG_KERNEL_CONNECTION  0
 #define DEBUG_KERNEL_LOCAL       1
 #define DEBUG_KERNEL_EXDI_DRIVER 2
+#define DEBUG_KERNEL_IDNA        3
 
 #define DEBUG_KERNEL_SMALL_DUMP  DEBUG_DUMP_SMALL
 #define DEBUG_KERNEL_DUMP        DEBUG_DUMP_DEFAULT
@@ -8491,7 +8539,7 @@ DECLARE_INTERFACE_(IDebugControl4, IUnknown)
 
     STDMETHOD(InputWide)(
         THIS_
-        __out PWSTR Buffer,
+        __out_ecount(BufferSize) PWSTR Buffer,
         __in ULONG BufferSize,
         __out_opt PULONG InputSize
         ) PURE;
@@ -8996,8 +9044,9 @@ DECLARE_INTERFACE_(IDebugControl4, IUnknown)
 #define DEBUG_DATA_OffsetPrcbNumber                     702
 #define DEBUG_DATA_SizeEThread                          704
 #define DEBUG_DATA_KdPrintCircularBufferPtrAddr         712
-#define DEBUG_DATA_KdPrintBufferSizeAddr             720
-#define DEBUG_DATA_MmBadPagesDetected             800
+#define DEBUG_DATA_KdPrintBufferSizeAddr                720
+#define DEBUG_DATA_MmBadPagesDetected                   800
+#define DEBUG_DATA_EtwpDebuggerData                     816
 
 #define DEBUG_DATA_PaeEnabled                        100000
 #define DEBUG_DATA_SharedUserData                    100008
@@ -9852,9 +9901,10 @@ DECLARE_INTERFACE_(IDebugDataSpaces3, IUnknown)
 
 #define DEBUG_OFFSINFO_VIRTUAL_SOURCE 0x00000001
 
-#define DEBUG_VSOURCE_INVALID      0x00000000
-#define DEBUG_VSOURCE_DEBUGGEE     0x00000001
-#define DEBUG_VSOURCE_MAPPED_IMAGE 0x00000002
+#define DEBUG_VSOURCE_INVALID              0x00000000
+#define DEBUG_VSOURCE_DEBUGGEE             0x00000001
+#define DEBUG_VSOURCE_MAPPED_IMAGE         0x00000002
+#define DEBUG_VSOURCE_DUMP_WITHOUT_MEMINFO 0x00000003
 
 #define DEBUG_VSEARCH_DEFAULT       0x00000000
 #define DEBUG_VSEARCH_WRITABLE_ONLY 0x00000001
@@ -11622,6 +11672,7 @@ DECLARE_INTERFACE_(IDebugSymbolGroup2, IUnknown)
 #define DEBUG_MODULE_LOADED            0x00000000
 #define DEBUG_MODULE_UNLOADED          0x00000001
 #define DEBUG_MODULE_USER_MODE         0x00000002
+#define DEBUG_MODULE_EXE_MODULE        0x00000004
 #define DEBUG_MODULE_EXPLICIT          0x00000008
 #define DEBUG_MODULE_SECONDARY         0x00000010
 #define DEBUG_MODULE_SYNTHETIC         0x00000020
@@ -11693,6 +11744,11 @@ typedef struct _DEBUG_MODULE_PARAMETERS
 // in special situations where it is unlikely that
 // this value would be a valid offset.
 #define DEBUG_INVALID_OFFSET ((ULONG64)-1)
+
+// Module index sort order used by GetModuleByIndex() API.
+#define MODULE_ORDERS_MASK       0xF0000000
+#define MODULE_ORDERS_LOADTIME   0x10000000
+#define MODULE_ORDERS_MODULENAME 0x20000000
 
 #undef INTERFACE
 #define INTERFACE IDebugSymbols
@@ -16107,3 +16163,4 @@ public:
 #endif // #ifdef __cplusplus
 
 #endif // #ifndef __DBGENG_H__
+

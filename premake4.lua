@@ -109,14 +109,23 @@ project "LuaInject"
         "libs/tinyxml/include",
         "libs/dbghlp/include",
     }
-    libdirs {
-        "libs/tinyxml/lib",
-        "libs/dbghlp/lib",
-    }
+
     links {
         "Shared",
         "psapi",
     }
+
+    configuration "x32"
+        libdirs {
+            "libs/tinyxml/lib",
+            "libs/dbghelp/lib",
+        }
+
+    configuration "x64"
+        libdirs {
+            "libs/tinyxml/lib64",
+            "libs/dbghelp/lib64",
+        }
 
     configuration "Debug"
         links { "tinyxmld_STL" }
@@ -152,11 +161,15 @@ project "tinyxml_STL"
         "libs/tinyxml/src/xmltest.cpp",
     }
 
-    configuration "Debug"
+    configuration "x32"
         targetdir "libs/tinyxml/lib"
+
+    configuration "x64"
+        targetdir "libs/tinyxml/lib64"
+
+    configuration "Debug"
         targetname "tinyxmld_STL"
 
     configuration "Release"
-        targetdir "libs/tinyxml/lib"
         targetname "tinyxml_STL"
 
