@@ -139,3 +139,24 @@ project "Shared"
     links {
     }
 
+project "tinyxml_STL"
+    kind "StaticLib"
+    location "build"
+    language "C++"
+    defines { "TIXML_USE_STL" }
+    files {
+        "libs/tinyxml/src/*.h",
+        "libs/tinyxml/src/*.cpp",
+    }
+    excludes {
+        "libs/tinyxml/src/xmltest.cpp",
+    }
+
+    configuration "Debug"
+        targetdir "libs/tinyxml/lib"
+        targetname "tinyxmld_STL"
+
+    configuration "Release"
+        targetdir "libs/tinyxml/lib"
+        targetname "tinyxml_STL"
+
