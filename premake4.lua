@@ -173,3 +173,37 @@ project "tinyxml_STL"
     configuration "Release"
         targetname "tinyxml_STL"
 
+project "wxScintilla"
+    kind "StaticLib"
+    location "build"
+    language "C++"
+    defines { "_LIB", "__WXMSW__", "__WX__", "SCI_LEXER", "LINK_LEXERS" }
+    files {
+        "libs/wxScintilla/include/wx/*.h",
+        "libs/wxScintilla/src/*.h",
+        "libs/wxScintilla/src/*.cpp",
+        "libs/wxScintilla/src/scintilla/include/*.h",
+        "libs/wxScintilla/src/scintilla/src/*.h",
+        "libs/wxScintilla/src/scintilla/src/*.cxx",
+    }
+    includedirs {
+        "libs/wxScintilla/include",
+        "libs/wxScintilla/src/scintilla/include",
+        "libs/wxScintilla/src/scintilla/src",
+        "libs/wxWidgets/include",
+        "libs/wxWidgets/lib/vc_lib/msw",
+    }
+
+    configuration "x32"
+        targetdir "libs/wxScintilla/lib"
+
+    configuration "x64"
+        targetdir "libs/wxScintilla/lib64"
+
+    configuration "Debug"
+        defines { "__WXDEBUG__" }
+        targetname "wxscintillad"
+
+    configuration "Release"
+        targetname "wxscintilla"
+
