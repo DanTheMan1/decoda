@@ -10,6 +10,8 @@
 #ifndef UPDATER_H
 #define UPDATER_H
 
+//#define UPDATELIBRARY_EXPORTS
+
 #ifdef UPDATELIBRARY_EXPORTS
     #define UPDATER_EXPORT  __declspec(dllexport)
 #else
