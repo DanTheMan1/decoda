@@ -9,7 +9,7 @@
 // Author:      Robin Dunn
 //
 // Created:     13-Jan-2000
-// RCS-ID:      $Id: ScintillaWX.h,v 1.9 2006/06/06 19:16:25 wyo Exp $
+// RCS-ID:      $Id: ScintillaWX.h,v 1.9 2006-06-06 19:16:25 wyo Exp $
 // Copyright:   (c) 2000 by Total Control Software
 // Licence:     wxWindows license
 /////////////////////////////////////////////////////////////////////////////
@@ -34,9 +34,6 @@
 #include "Accessor.h"
 #include "KeyWords.h"
 #endif
-#include "SplitVector.h"
-#include "Partitioning.h"
-#include "RunStyles.h"
 #include "ContractionState.h"
 #include "SVector.h"
 #include "CellBuffer.h"
@@ -49,9 +46,7 @@
 #include "AutoComplete.h"
 #include "CharClassify.h"
 #include "RESearch.h"
-#include "Decoration.h"
 #include "Document.h"
-#include "PositionCache.h"
 #include "Editor.h"
 #include "ScintillaBase.h"
 

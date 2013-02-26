@@ -8,10 +8,6 @@
 #ifndef DOCUMENT_H
 #define DOCUMENT_H
 
-#ifdef SCI_NAMESPACE
-namespace Scintilla {
-#endif
-
 /**
  * A Position is a position within a document between two characters or at the beginning or end.
  * Sometimes used as a character index where it identifies the character after the position.
@@ -74,24 +70,7 @@ public:
 
 class DocWatcher;
 class DocModification;
-class Document;
-
-/**
- * Interface class for regular expression searching
- */
-class RegexSearchBase {
-public:
-	virtual ~RegexSearchBase(){}
-
-	virtual long FindText(Document* doc, int minPos, int maxPos, const char *s,
-                        bool caseSensitive, bool word, bool wordStart, int flags, int *length) = 0;
-
-	///@return String with the substitutions, must remain valid until the next call or destruction
-	virtual const char *SubstituteByPosition(Document* doc, const char *text, int *length) = 0;
-};
-
-/// Factory function for RegexSearchBase
-extern RegexSearchBase* CreateRegexSearch(CharClassify *charClassTable);
+class RESearch;
 
 /**
  */
@@ -118,15 +97,15 @@ private:
 	char stylingMask;
 	int endStyled;
 	int styleClock;
-	int enteredModification;
-	int enteredStyling;
+	int enteredCount;
 	int enteredReadOnlyCount;
 
 	WatcherWithUserData *watchers;
 	int lenWatchers;
 
 	bool matchesValid;
-	RegexSearchBase* regex;
+	RESearch *pre;
+	char *substituted;
 
 public:
 	int stylingBits;
@@ -142,8 +121,6 @@ public:
 	bool tabIndents;
 	bool backspaceUnindents;
 
-	DecorationList decorations;
-
 	Document();
 	virtual ~Document();
 
@@ -154,14 +131,12 @@ public:
 	int ClampPositionIntoDocument(int pos);
 	bool IsCrLf(int pos);
 	int LenChar(int pos);
-	bool InGoodUTF8(int pos, int &start, int &end);
 	int MovePositionOutsideChar(int pos, int moveDir, bool checkLineEnd=true);
 
 	// Gateways to modifying document
 	void ModifiedAt(int pos);
-	void CheckReadOnly();
 	bool DeleteChars(int pos, int len);
-	bool InsertString(int position, const char *s, int insertLength);
+	bool InsertStyledString(int position, char *s, int insertLength);
 	int Undo();
 	int Redo();
 	bool CanUndo() { return cb.CanUndo(); }
@@ -175,11 +150,10 @@ public:
 	void EndUndoAction() { cb.EndUndoAction(); }
 	void SetSavePoint();
 	bool IsSavePoint() { return cb.IsSavePoint(); }
-	const char *BufferPointer() { return cb.BufferPointer(); }
 
 	int GetLineIndentation(int line);
 	void SetLineIndentation(int line, int indent);
-	int GetLineIndentPosition(int line) const;
+	int GetLineIndentPosition(int line);
 	int GetColumn(int position);
 	int FindColumn(int line, int column);
 	void Indent(bool forwards, int lineBottom, int lineTop);
@@ -189,7 +163,8 @@ public:
 	bool IsReadOnly() { return cb.IsReadOnly(); }
 
 	bool InsertChar(int pos, char ch);
-	bool InsertCString(int position, const char *s);
+	bool InsertString(int position, const char *s);
+	bool InsertString(int position, const char *s, size_t insertLength);
 	void ChangeChar(int pos, char ch);
 	void DelChar(int pos);
 	void DelCharBack(int pos);
@@ -206,8 +181,8 @@ public:
 	void DeleteMarkFromHandle(int markerHandle);
 	void DeleteAllMarks(int markerNum);
 	int LineFromHandle(int markerHandle) { return cb.LineFromHandle(markerHandle); }
-	int LineStart(int line) const;
-	int LineEnd(int line) const;
+	int LineStart(int line);
+	int LineEnd(int line);
 	int LineEndPosition(int position);
 	int VCHomePosition(int position);
 
@@ -221,13 +196,13 @@ public:
 	int ExtendWordSelect(int pos, int delta, bool onlyWordCharacters=false);
 	int NextWordStart(int pos, int delta);
 	int NextWordEnd(int pos, int delta);
-	int Length() const { return cb.Length(); }
-	void Allocate(int newSize) { cb.Allocate(newSize); }
+	int Length() { return cb.Length(); }
+	void Allocate(int newSize) { cb.Allocate(newSize*2); }
 	long FindText(int minPos, int maxPos, const char *s,
-		bool caseSensitive, bool word, bool wordStart, bool regExp, int flags, int *length);
+		bool caseSensitive, bool word, bool wordStart, bool regExp, bool posix, int *length);
 	long FindText(int iMessage, unsigned long wParam, long lParam);
 	const char *SubstituteByPosition(const char *text, int *length);
-	int LinesTotal() const;
+	int LinesTotal();
 
 	void ChangeCase(Range r, bool makeUpperCase);
 
@@ -238,12 +213,11 @@ public:
 	bool SetStyleFor(int length, char style);
 	bool SetStyles(int length, char *styles);
 	int GetEndStyled() { return endStyled; }
-	void EnsureStyledTo(int pos);
+	bool EnsureStyledTo(int pos);
 	int GetStyleClock() { return styleClock; }
 	void IncrementStyleClock();
-	void DecorationFillRange(int position, int value, int fillLength);
 
-	int SetLineState(int line, int state);
+	int SetLineState(int line, int state) { return cb.SetLineState(line, state); }
 	int GetLineState(int line) { return cb.GetLineState(line); }
 	int GetMaxLineState() { return cb.GetMaxLineState(); }
 
@@ -256,13 +230,15 @@ public:
 	int WordPartLeft(int pos);
 	int WordPartRight(int pos);
 	int ExtendStyleRange(int pos, int delta, bool singleLine = false);
-	bool IsWhiteLine(int line) const;
+	bool IsWhiteLine(int line);
 	int ParaUp(int pos);
 	int ParaDown(int pos);
 	int IndentSize() { return actualIndentInChars; }
 	int BraceMatch(int position, int maxReStyle);
 
 private:
+	void CheckReadOnly();
+
 	CharClassify::cc WordCharClass(unsigned char ch);
 	bool IsWordStartAt(int pos);
 	bool IsWordEndAt(int pos);
@@ -325,9 +301,5 @@ public:
 	virtual void NotifyDeleted(Document *doc, void *userData) = 0;
 	virtual void NotifyStyleNeeded(Document *doc, void *userData, int endPos) = 0;
 };
-
-#ifdef SCI_NAMESPACE
-}
-#endif
 
 #endif
