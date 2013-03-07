@@ -166,8 +166,6 @@ static void ColouriseLuaDoc(
 					sc.ChangeState(SCE_LUA_WORD5);
 				} else if (keywords6.InList(s)) {
 					sc.ChangeState(SCE_LUA_WORD6);
-				} else if (keywords6.InList(s)) {
-					sc.ChangeState(SCE_LUA_WORD6);
 				} else if (keywords7.InList(s)) {
 					sc.ChangeState(SCE_LUA_WORD7);
 				} else if (keywords8.InList(s)) {
@@ -199,6 +197,12 @@ static void ColouriseLuaDoc(
 				sc.ForwardSetState(SCE_LUA_DEFAULT);
 			} else if (sc.atLineEnd) {
 				sc.ChangeState(SCE_LUA_STRINGEOL);
+				sc.ForwardSetState(SCE_LUA_DEFAULT);
+			}
+		} else if (sc.state == SCE_LUA_COMMENTDOC) {
+			if (sc.Match('*', '/'))
+			{
+				sc.Forward(2);
 				sc.ForwardSetState(SCE_LUA_DEFAULT);
 			}
 		} else if (sc.state == SCE_LUA_LITERALSTRING || sc.state == SCE_LUA_COMMENT) {
@@ -245,7 +249,12 @@ static void ColouriseLuaDoc(
 					sc.SetState(SCE_LUA_LITERALSTRING);
 					sc.Forward(sepCount);
 				}
-			} else if (sc.Match('-', '-')) {
+				} else if (sc.Match('/', '*')) {
+
+					sc.SetState(SCE_LUA_COMMENTDOC);
+
+
+				} else if (sc.Match('-', '-') || sc.Match('/', '/')) {
 				sc.SetState(SCE_LUA_COMMENTLINE);
 				if (sc.Match("--[")) {
 					sc.Forward(2);
